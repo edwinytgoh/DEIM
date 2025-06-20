@@ -446,3 +446,9 @@ If you use `DEIM` or its methods in your work, please cite the following BibTeX 
 Our work is built upon [D-FINE](https://github.com/Peterande/D-FINE) and [RT-DETR](https://github.com/lyuwenyu/RT-DETR).
 
 ✨ Feel free to contribute and reach out if you have any questions! ✨
+
+
+Edwin's Conda env:
+```
+conda create --name slice_env python=3.12 "pytorch=*=*cuda*" "torchvision=*=*cuda*" torchaudio tensorboard wandb seaborn pandas tqdm opencv jupyter scikit-learn darker isort netcdf4 h5netcdf xmitgcm aiohttp moviepy accelerate torchmetrics xrft omegaconf gdal libgdal geopandas shapely pyyaml scikit-learn astropy submitit scikit-learn astropy submitit ecco_v4_py rasterio pyinterp faster-coco-eval transformers -c conda-forge -y
+```

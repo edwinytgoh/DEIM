@@ -1,0 +1,88 @@
+# == Sentinel-1 SAR Ocean-Eddy Detection ================================
+# Put this file under configs/dataset/ so every existing DEIM recipe
+# can simply __include__: [ '/dataset/sar_dataset.yml', ... ]
+
+task: detection          # tells DEIM we are in object-detection mode
+
+evaluator:               # keep DEIM’s stock COCO mAP evaluator
+  type: CocoEvaluator
+  iou_types: ['bbox']
+
+# ---------- BASIC DATASET META ----------------------------------------
+num_classes: 1           # single class “eddy”
+remap_mscoco_category: False   # never remap our category IDs
+
+# ---------- TRAIN LOADER ----------------------------------------------
+train_dataloader:
+  type: DataLoader
+  dataset:
+    # our thin adapter that wraps the SAR tiler
+    type: DEIM_SAR_Dataset
+
+    # *** absolute or Windows-style paths are fine ***
+    img_folder: "G:/med_tiles_clahe/"  # S1A_IW_GRDH_1SDV_20141101T165639_20141101T165704_003091_0038AA_1027.tif"        # image_input_path
+    ann_file:   "F:/Shared drives/SLICE/SAR Foundation and Eddy Detection/SAR-WMS-Eddy/edwin_files/test_eddy_catalog_coco.json"
+
+    # sliding-window params (in pixels)
+    window_size: 640
+    stride:      320
+
+    # return_masks: False      # boxes only
+
+    # ---------------- TRANSFORMS PIPELINE ------------------------------
+    transforms:
+      type: Compose
+      policy:
+        name: stop_epoch
+        epoch: 72 # epoch in [71, ~) stop `ops`
+        ops: ['Mosaic', 'RandomPhotometricDistort', 'RandomZoomOut', 'RandomIoUCrop']     
+      ops:
+        # keep it short & SAR-safe: nearest-neighbour only,
+        # normalise with dataset-specific statistics
+        - {type: Resize, size: [640, 640], interpolation: 0}
+        - {type: ConvertPILImage, dtype: 'float32', scale: False}
+        # - {type: SARSafeNormalize,
+        #    mean: [0.3168, 0.3168, 0.3168],
+        #    std:  [0.3172, 0.3172, 0.3172]}
+        # convert *after* normalisation so boxes are ready for DEIM loss
+        - {type: ConvertBoxes, fmt: 'cxcywh', normalize: True}
+
+  # same loader behaviour as the COCO template
+  shuffle: True
+  num_workers: 4
+  drop_last: True
+  collate_fn:
+    type: BatchImageCollateFunction
+    base_size: 640
+    base_size_repeat: 3        # enable multi-scale
+    stop_epoch: 72             # stops multi-scale after 72 epochs
+
+# ---------- VAL LOADER -------------------------------------------------
+val_dataloader:
+  type: DataLoader
+  dataset:
+    type: DEIM_SAR_Dataset
+    img_folder: "G:/med_tiles_clahe/"  # S1A_IW_GRDH_1SDV_20141101T165639_20141101T165704_003091_0038AA_1027.tif"
+    ann_file:   "F:/Shared drives/SLICE/SAR Foundation and Eddy Detection/SAR-WMS-Eddy/edwin_files/test_eddy_catalog_coco.json"
+    window_size: 640
+    stride: 320
+    # return_masks: False
+    transforms:
+      type: Compose
+      policy:
+        name: stop_epoch
+        epoch: 72 # epoch in [71, ~) stop `ops`
+        ops: ['Mosaic', 'RandomPhotometricDistort', 'RandomZoomOut', 'RandomIoUCrop']
+      ops:
+        - {type: Resize, size: [640, 640], interpolation: 0}
+        - {type: ConvertPILImage, dtype: 'float32', scale: False}
+        # - {type: SARSafeNormalize,
+        #    mean: [0.3168, 0.3168, 0.3168],
+        #    std:  [0.3172, 0.3172, 0.3172]}
+        - {type: ConvertBoxes, fmt: 'cxcywh', normalize: True}
+
+  shuffle: False
+  num_workers: 4
+  drop_last: False
+  collate_fn:
+    type: BatchImageCollateFunction

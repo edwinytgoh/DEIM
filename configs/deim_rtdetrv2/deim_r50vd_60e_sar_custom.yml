@@ -1,0 +1,22 @@
+# Training configuration for DEIM RT-DETR R50-VD on Custom SAR Dataset
+
+__include__: [
+  './deim_r50vd_60e_coco.yml',
+  '../dataset/sar_dataset.yml',
+]
+
+# Training settings
+output_dir: output/deim_r50vd_sar_custom
+
+# Override optimizer settings
+optimizer:
+  params:
+    -
+      params: '^(?=.*backbone)(?!.*norm).*$'
+      lr: 0.00001
+    -
+      params: '^(?=.*(?:encoder|decoder))(?=.*(?:norm|bn)).*$'
+      weight_decay: 0.
+  lr: 0.0001
+  betas: [0.9, 0.999]
+  weight_decay: 0.0001

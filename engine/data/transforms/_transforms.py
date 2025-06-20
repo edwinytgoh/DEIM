@@ -66,6 +66,10 @@ class PadToSize(T.Pad):
         self.size = size
         super().__init__(0, fill, padding_mode)
 
+    # create alias of _transform called `transform`
+    def transform(self, *args):
+        return self._transform(*args)
+
     def _transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
         fill = self._fill[type(inpt)]
         padding = params['padding']
@@ -101,6 +105,10 @@ class ConvertBoxes(T.Transform):
         self.fmt = fmt
         self.normalize = normalize
 
+    # create alias of _transform called `transform`
+    def transform(self, *args):
+        return self._transform(*args)
+
     def _transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
         spatial_size = getattr(inpt, _boxes_keys[1])
         if self.fmt:
@@ -123,6 +131,10 @@ class ConvertPILImage(T.Transform):
         super().__init__()
         self.dtype = dtype
         self.scale = scale
+
+    # create alias of _transform called `transform`
+    def transform(self, *args):
+        return self._transform(*args)
 
     def _transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
         inpt = F.pil_to_tensor(inpt)
